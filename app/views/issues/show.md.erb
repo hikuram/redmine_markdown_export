@@ -1,0 +1,46 @@
+<%= md_text("# \##{@issue.id}: #{@issue.subject}") %>
+
+| <%= md_cell(l(:field_name)) %> | <%= md_cell(l(:field_value)) %> |
+|---|---|
+| **<%= md_cell(l(:field_project)) %>** | <%= md_cell(@issue.project) %> |
+| **<%= md_cell(l(:field_tracker)) %>** | <%= md_cell(@issue.tracker) %> |
+| **<%= md_cell(l(:field_status)) %>** | <%= md_cell(@issue.status) %> |
+| **<%= md_cell(l(:field_priority)) %>** | <%= md_cell(@issue.priority) %> |
+| **<%= md_cell(l(:field_author)) %>** | <%= md_cell(@issue.author) %> |
+| **<%= md_cell(l(:field_assigned_to)) %>** | <%= md_cell(@issue.assigned_to || '-') %> |
+| **<%= md_cell(l(:field_category)) %>** | <%= md_cell(@issue.category || '-') %> |
+| **<%= md_cell(l(:field_fixed_version)) %>** | <%= md_cell(@issue.fixed_version || '-') %> |
+| **<%= md_cell(l(:field_start_date)) %>** | <%= md_cell(@issue.start_date ? format_date(@issue.start_date) : '-') %> |
+| **<%= md_cell(l(:field_due_date)) %>** | <%= md_cell(@issue.due_date ? format_date(@issue.due_date) : '-') %> |
+| **<%= md_cell(l(:field_done_ratio)) %>** | <%= md_cell("#{@issue.done_ratio}%") %> |
+| **<%= md_cell(l(:field_estimated_hours)) %>** | <%= md_cell(@issue.estimated_hours ? "#{@issue.estimated_hours}h" : '-') %> |
+| **<%= md_cell(l(:field_created_on)) %>** | <%= md_cell(format_time(@issue.created_on)) %> |
+| **<%= md_cell(l(:field_updated_on)) %>** | <%= md_cell(format_time(@issue.updated_on)) %> |
+<% @issue.visible_custom_field_values.each do |cfv| -%>
+<% next if cfv.value.blank? -%>
+| **<%= md_cell(cfv.custom_field.name) %>** | <%= md_cell(cfv.value) %> |
+<% end -%>
+
+<%= md_text("## #{l(:field_description)}") %>
+
+<%= md_text(@issue.description.presence || "_#{l(:label_no_data)}_") %>
+
+<% if @issue.attachments.any? -%>
+<%= md_text("## #{l(:label_attachment_plural)}") %>
+
+<% @issue.attachments.each do |attachment| -%>
+<%= md_text("- #{attachment.filename} (#{md_filesize(attachment.filesize)}) - #{attachment.author}, #{format_date(attachment.created_on)}") %>
+<% end -%>
+
+<% end -%>
+<% if @journals.present? && @journals.any? { |j| j.notes.present? } -%>
+<%= md_text("## #{l(:label_comment_plural)}") %>
+
+<% @journals.each do |journal| -%>
+<% next if journal.notes.blank? -%>
+<%= md_text("### #{journal.user} - #{format_time(journal.created_on)}") %>
+
+<%= md_text(journal.notes) %>
+
+<% end -%>
+<% end -%>
