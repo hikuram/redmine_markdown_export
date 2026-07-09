@@ -7,7 +7,7 @@ module RedmineMarkdownExport
       return '' unless controller.is_a?(IssuesController)
       return '' unless controller.action_name == 'show'
 
-      <<~HTML.html_safe
+      <<~'HTML'.html_safe
         <style>
         a.markdown-copy-button {
           background-image: none;
