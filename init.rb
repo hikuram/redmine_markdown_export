@@ -4,9 +4,9 @@ Mime::Type.register 'text/markdown', :md unless Mime::Type.lookup_by_extension(:
 
 Redmine::Plugin.register :redmine_markdown_export do
   name 'Redmine Markdown Export'
-  author 'Wellbia'
-  description 'Adds Markdown export format to issues (list and detail views)'
-  version '1.0.0'
+  author 'Wellbia, customized'
+  description 'Adds a Markdown copy action to issue detail pages'
+  version '1.1.0-custom'
   url 'https://github.com/wellbia/redmine_markdown_export'
   requires_redmine version_or_higher: '5.0'
 end

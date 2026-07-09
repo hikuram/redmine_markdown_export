@@ -1,22 +1,25 @@
 # Redmine Markdown Export
 
-A Redmine plugin that exports issues as Markdown files.
+A small Redmine plugin that adds a `Markdown Copy` button to issue detail pages.
 
-Append `.md` to any issue URL to download it as a Markdown document.
+The button fetches the current issue as Markdown and copies the result to the clipboard. The plugin intentionally targets only issue detail pages and does not export issue lists.
 
 ## Features
 
-- **Single issue export** — metadata, description, attachments, and comments
-- **Issue list export** — current query/filter results as a Markdown table
-- **One-click download** — adds a Markdown button to the "Also available in" area
-- **Custom field support** — all visible custom fields included in export
+- Issue detail page only
+- One-click Markdown copy
+- Markdown output for issue metadata, visible custom fields, description, attachments, and comment notes
+- Attachment entries include absolute Markdown links
+- Comment change details such as status changes are intentionally omitted
+- No database migration
+- No external network access
 
 ## Compatibility
 
 | Redmine | Status |
 |---------|--------|
-| 5.0+    | ✅     |
-| 4.x     | ❌     |
+| 5.0+    | Expected |
+| 4.x     | Not supported |
 
 ## Installation
 
@@ -25,7 +28,11 @@ cd /path/to/redmine/plugins
 git clone https://github.com/wellbia/redmine_markdown_export.git
 ```
 
-> **Note**: The directory must be named `redmine_markdown_export`. The plugin will not be recognized under a different name.
+If you install this customized version manually, keep the plugin directory name as follows:
+
+```text
+redmine_markdown_export
+```
 
 Restart Redmine:
 
@@ -37,91 +44,79 @@ bundle exec rails server
 docker compose restart redmine
 ```
 
-No database migration required — this plugin does not use any tables.
+No database migration is required.
 
 ## Usage
 
-### Append `.md` to the URL
+Open an issue detail page and click `Markdown Copy`.
 
-```
-GET /issues/123.md     → download issue #123 as Markdown
-GET /issues.md         → download issue list as Markdown
-```
+Internally, the button fetches:
 
-Query parameter style also works:
-
-```
-GET /issues/123?format=md
-GET /issues?format=md
+```text
+/issues/:id.md
 ```
 
-### Click the button
+and copies the response text to the clipboard.
 
-A `Markdown` link is automatically added to the **"Also available in"** area at the bottom of issue list and detail pages, next to CSV, PDF, and Atom.
+Direct access to `/issues/:id.md` returns the Markdown text response, but the plugin does not add a download link and does not handle `/issues.md` issue-list export.
 
-## Output Examples
-
-### Single issue (`/issues/123.md`)
+## Output Shape
 
 ```markdown
-# #123: Login returns 500 error
+# #123 Example issue
 
-| Field | Value |
-|---|---|
-| **Project** | MyProject |
-| **Tracker** | Bug |
-| **Status** | New |
-| **Priority** | High |
-| **Author** | Alice |
-| **Assigned to** | Bob |
+## Issue
+
+- **Project**: Example project
+- **Tracker**: Task
+- **Status**: New
+- **Priority**: Normal
+- **Author**: Alice
+- **Assigned to**: Bob
+- **URL**: https://redmine.example.com/issues/123
 
 ## Description
 
-POST request on the login page returns a 500 error.
-Steps to reproduce: ...
+Issue description text.
 
 ## Attachments
 
-- screenshot.png (245.3 KB) - Alice, 2026-03-18
+- [example.pdf](https://redmine.example.com/attachments/download/1/example.pdf) (120.0 KB) - Alice, 2026-07-09 09:00
 
 ## Comments
 
-### Bob - 2026-03-18 10:30
+### 2026-07-09 09:30 Bob
 
-Confirmed. Looks like a DB connection pool issue.
+Comment text.
 ```
 
-### Issue list (`/issues.md`)
+## Security Checks Before Production Use
 
-```markdown
-# MyProject - Issues
+Verify the following in your actual Redmine environment:
 
-**Date**: 2026-03-18
-
-| # | Tracker | Subject | Status | Priority | Assigned To | Updated On |
-|---|---|---|---|---|---|---|
-| 123 | Bug | Login returns 500 error | New | High | Bob | 2026-03-18 |
-| 124 | Feature | Dashboard redesign | In Progress | Normal | - | 2026-03-17 |
-```
+1. A user without issue visibility cannot access `/issues/:id.md`.
+2. Private notes are not included for users who cannot see them.
+3. Attachment links still require the normal Redmine permission checks.
+4. The copy button JavaScript does not access external hosts.
+5. The organization accepts raw Markdown text, including any raw HTML already present in issue descriptions or comments.
 
 ## How It Works
 
-```
+```text
 plugins/redmine_markdown_export/
-├── init.rb                                  # MIME type registration, patch loading
-├── app/views/issues/
-│   ├── index.md.erb                         # Issue list template
-│   └── show.md.erb                          # Issue detail template
-└── lib/redmine_markdown_export/
-    ├── hooks.rb                             # Markdown button injection
-    ├── issues_controller_patch.rb           # .md format request handling
-    └── formatting_helper.rb                 # Markdown escape helpers
+|-- init.rb
+|-- app/views/issues/
+|   `-- show.md.erb
+`-- lib/redmine_markdown_export/
+    |-- formatting_helper.rb
+    |-- hooks.rb
+    `-- issues_controller_patch.rb
 ```
 
-1. `init.rb` registers the `text/markdown` MIME type as `:md`
-2. A `before_action` is prepended to `IssuesController` to intercept `.md` format requests
-3. Issue data is rendered through ERB templates and sent as a `.md` file via `send_data`
-4. A `view_layouts_base_body_bottom` hook injects the Markdown download button into the page
+1. `init.rb` registers `text/markdown` as the `:md` format.
+2. `issues_controller_patch.rb` handles `.md` only for `IssuesController#show`.
+3. `show.md.erb` renders one issue as a single Markdown document.
+4. `hooks.rb` injects the `Markdown Copy` button into issue detail pages.
 
 ## Uninstall
 
@@ -130,17 +125,7 @@ cd /path/to/redmine/plugins
 rm -rf redmine_markdown_export
 ```
 
-Restart Redmine. No database rollback required.
-
-## Contributing
-
-1. Fork
-2. Create feature branch (`git checkout -b feature/my-feature`)
-3. Commit (`git commit -am 'Add my feature'`)
-4. Push (`git push origin feature/my-feature`)
-5. Pull Request
-
-Bug reports and feature requests are welcome on [Issues](https://github.com/wellbia/redmine_markdown_export/issues).
+Restart Redmine. No database rollback is required.
 
 ## License
 

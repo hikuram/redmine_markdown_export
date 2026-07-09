@@ -1,9 +1,0 @@
-<%= md_text("# #{@project&.name || Setting.app_title} - #{l(:label_issue_plural)}") %>
-
-<%= md_text("**#{l(:label_date)}**: #{format_date(Time.now)}") %>
-
-| # | <%= md_cell(l(:field_tracker)) %> | <%= md_cell(l(:field_subject)) %> | <%= md_cell(l(:field_status)) %> | <%= md_cell(l(:field_priority)) %> | <%= md_cell(l(:field_assigned_to)) %> | <%= md_cell(l(:field_updated_on)) %> |
-|---|---|---|---|---|---|---|
-<% @issues.each do |issue| -%>
-| <%= md_cell(issue.id) %> | <%= md_cell(issue.tracker) %> | <%= md_cell(issue.subject) %> | <%= md_cell(issue.status) %> | <%= md_cell(issue.priority) %> | <%= md_cell(issue.assigned_to || '-') %> | <%= md_cell(format_date(issue.updated_on)) %> |
-<% end -%>
