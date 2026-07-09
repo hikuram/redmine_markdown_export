@@ -1,37 +1,75 @@
 # Redmine Markdown Export
 
-A small Redmine plugin that adds a `Markdown Copy` button to issue detail pages.
+A small Redmine plugin that turns the standard issue copy action into an issue Markdown copy action.
 
-The button fetches the current issue as Markdown and copies the result to the clipboard. The plugin intentionally targets only issue detail pages and does not export issue lists.
+On issue detail pages, the visible Redmine `Copy` action keeps the current Redmine theme and localized label, but its click behavior is replaced with `Copy Markdown`. The original issue duplication URL is preserved and added to the action menu as `Duplicate issue`.
+
+The plugin intentionally targets only issue detail pages and does not export issue lists.
 
 ## Features
 
 - Issue detail page only
-- One-click Markdown copy
+- Reuses the standard Redmine issue `Copy` link instead of adding a custom large button
+- Copies one issue as Markdown to the clipboard
+- Adds the original issue duplication action to the action menu as `Duplicate issue`
 - Markdown output for issue metadata, visible custom fields, description, attachments, and comment notes
 - Attachment entries include absolute Markdown links
 - Comment change details such as status changes are intentionally omitted
 - No database migration
 - No external network access
 
+## UI Behavior
+
+On an issue detail page:
+
+```text
+Visible action row:
+- Copy
+```
+
+The visible label remains Redmine's standard localized label, such as `Copy` or `コピー`. Clicking it fetches:
+
+```text
+/issues/:id.md
+```
+
+and copies the Markdown response to the clipboard.
+
+The original Redmine issue duplication action is moved into the action menu:
+
+```text
+Action menu:
+- Copy link
+- Duplicate issue
+- Delete issue
+```
+
+`Duplicate issue` is intentionally English-only. The plugin does not override Redmine core translations.
+
 ## Compatibility
 
 | Redmine | Status |
 |---------|--------|
-| 5.0+    | Expected |
+| 7.0     | Expected, tested manually in one environment |
+| 6.0 / 6.1 | Expected |
+| 5.0+    | Expected from the original plugin baseline, but not the main target |
 | 4.x     | Not supported |
+
+The JavaScript identifies the original issue duplication link by URL shape rather than by visible text, so it is not dependent on the UI language.
 
 ## Installation
 
-```bash
-cd /path/to/redmine/plugins
-git clone https://github.com/wellbia/redmine_markdown_export.git
-```
-
-If you install this customized version manually, keep the plugin directory name as follows:
+Copy this plugin into Redmine's `plugins` directory using this directory name:
 
 ```text
 redmine_markdown_export
+```
+
+Example:
+
+```bash
+cd /path/to/redmine/plugins
+unzip redmine_markdown_export.zip
 ```
 
 Restart Redmine:
@@ -48,17 +86,17 @@ No database migration is required.
 
 ## Usage
 
-Open an issue detail page and click `Markdown Copy`.
+Open an issue detail page and click the standard `Copy` action in the visible action row.
 
-Internally, the button fetches:
+The link text is not changed permanently. During the operation it may briefly show:
 
 ```text
-/issues/:id.md
+Building...
+Copied
+Copy failed
 ```
 
-and copies the response text to the clipboard.
-
-Direct access to `/issues/:id.md` returns the Markdown text response, but the plugin does not add a download link and does not handle `/issues.md` issue-list export.
+Direct access to `/issues/:id.md` returns the Markdown text response. The plugin does not add a download link and does not handle `/issues.md` issue-list export.
 
 ## Output Shape
 
@@ -97,7 +135,7 @@ Verify the following in your actual Redmine environment:
 1. A user without issue visibility cannot access `/issues/:id.md`.
 2. Private notes are not included for users who cannot see them.
 3. Attachment links still require the normal Redmine permission checks.
-4. The copy button JavaScript does not access external hosts.
+4. The injected JavaScript does not access external hosts.
 5. The organization accepts raw Markdown text, including any raw HTML already present in issue descriptions or comments.
 
 ## How It Works
@@ -116,7 +154,11 @@ plugins/redmine_markdown_export/
 1. `init.rb` registers `text/markdown` as the `:md` format.
 2. `issues_controller_patch.rb` handles `.md` only for `IssuesController#show`.
 3. `show.md.erb` renders one issue as a single Markdown document.
-4. `hooks.rb` injects the `Markdown Copy` button into issue detail pages.
+4. `hooks.rb` patches the issue detail page action row in the browser:
+   - Finds the standard Redmine issue duplication link by URL.
+   - Stores its original URL.
+   - Replaces its click behavior with Markdown copy.
+   - Adds `Duplicate issue` to the action menu using the stored URL.
 
 ## Uninstall
 
