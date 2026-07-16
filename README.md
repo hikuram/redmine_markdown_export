@@ -84,6 +84,14 @@ docker compose restart redmine
 
 No database migration is required.
 
+In some production deployments, especially when plugin assets are not copied automatically, run:
+
+```bash
+bundle exec rake redmine:plugins:assets RAILS_ENV=production
+```
+
+Then restart Redmine.
+
 ## Usage
 
 Open an issue detail page and click the standard `Copy` action in the visible action row.
@@ -145,6 +153,8 @@ plugins/redmine_markdown_export/
 |-- init.rb
 |-- app/views/issues/
 |   `-- show.md.erb
+|-- assets/javascripts/
+|   `-- redmine_markdown_export.js
 `-- lib/redmine_markdown_export/
     |-- formatting_helper.rb
     |-- hooks.rb
@@ -154,7 +164,8 @@ plugins/redmine_markdown_export/
 1. `init.rb` registers `text/markdown` as the `:md` format.
 2. `issues_controller_patch.rb` handles `.md` only for `IssuesController#show`.
 3. `show.md.erb` renders one issue as a single Markdown document.
-4. `hooks.rb` patches the issue detail page action row in the browser:
+4. `hooks.rb` loads `assets/javascripts/redmine_markdown_export.js` only on issue detail pages.
+5. `redmine_markdown_export.js` patches the issue detail page action row in the browser:
    - Finds the standard Redmine issue duplication link by URL.
    - Stores its original URL.
    - Replaces its click behavior with Markdown copy.
